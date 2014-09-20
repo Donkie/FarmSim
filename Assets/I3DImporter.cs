@@ -310,6 +310,7 @@ public class I3DImporter
         string attr = xml.GetAttribute("externalShapesFile");
         Debug.Log(attr);
         Debug.Log(useObjFile);
+
         if (attr != null && useObjFile)
         {
             if(!File.Exists(ObjFile))
