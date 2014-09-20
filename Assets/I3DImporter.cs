@@ -300,8 +300,6 @@ public class I3DImporter
 
         Stack<I3DShape> shapes = new Stack<I3DShape>();
 
-        XmlReaderExt.Read(xml);
-
         Debug.Log("ParseFile_Shapes");
         Debug.Log(xml.LocalName);
         Debug.Log(xml.HasAttributes);

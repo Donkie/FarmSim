@@ -15,6 +15,6 @@ public class Main : MonoBehaviour
         
 
 	    MeshFilter modelmesh = (MeshFilter)Instantiate(Vehicle);
-	    //modelmesh.mesh = model.Shapes[7].Mesh;
+	    modelmesh.mesh = model.Shapes[7].Mesh;
 	}
 }
