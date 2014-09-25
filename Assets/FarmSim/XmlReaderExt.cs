@@ -1,24 +1,34 @@
 using System.Xml;
 
-public class XmlReaderExt
+namespace Assets.FarmSim
 {
-    public static bool ReadToNextElement(XmlReader xml)
+    public class XmlReaderExt
     {
-        while (xml.Read())
+        public static bool ReadToNextElement(XmlReader xml)
         {
-            if (xml.NodeType == XmlNodeType.Element)
-                return true;
+            while (xml.Read())
+            {
+                if (xml.NodeType == XmlNodeType.Element)
+                    return true;
+            }
+
+            return false;
         }
 
-        return false;
-    }
-
-    public static void Read(XmlReader xml)
-    {
-        while (xml.Read())
+        public static bool SafeCheckEndElement(XmlReader xml)
         {
-            if (xml.NodeType != XmlNodeType.Whitespace)
-                break;
+            return xml.NodeType != XmlNodeType.EndElement && !xml.EOF;
+        }
+
+        public static void Read(XmlReader xml)
+        {
+            /*while (xml.Read())
+            {
+                if (xml.NodeType != XmlNodeType.Whitespace)
+                    break;
+            }*/
+            xml.Read();
+            xml.MoveToContent();
         }
     }
 }

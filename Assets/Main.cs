@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using Assets.FarmSim.I3D;
 
 namespace Assets
@@ -10,6 +11,7 @@ namespace Assets
         private void Awake()
         {
             Debug.Log("Start");
+            Console.WriteLine("Start");
 
             I3DImporter importer = new I3DImporter();
             //importer.ObjFile = @"D:\SteamLibrary\SteamApps\common\Farming Simulator 2013\data\maps\map01.obj";

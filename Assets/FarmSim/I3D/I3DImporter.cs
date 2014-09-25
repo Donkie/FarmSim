@@ -103,9 +103,32 @@ namespace Assets.FarmSim.I3D
             return output;
         }
 
+        private static int ParseInt(string sI)
+        {
+            int iOut;
+            return int.TryParse(sI, out iOut) ? iOut : 0;
+        }
+
+        private static float ParseFloat(string sI)
+        {
+            float iOut;
+            return float.TryParse(sI, out iOut) ? iOut : 0f;
+        }
+
+        private static bool ParseBool(string sI)
+        {
+            bool iOut;
+            return bool.TryParse(sI, out iOut) && iOut;
+        }
+
+        private static string ParseString(string sI)
+        {
+            return sI ?? "";
+        }
+
         #endregion
 
-        private void ParseFile_Materials(ref I3DModel model, XmlReader xml)
+        private static void ParseFile_Materials(ref I3DModel model, XmlReader xml)
         {
             Stack<I3DMaterial> mats = new Stack<I3DMaterial>();
 
@@ -123,28 +146,13 @@ namespace Assets.FarmSim.I3D
                 string sMatId = xml.GetAttribute("materialId");
                 if (sName != null && sMatId != null)
                 {
-                    string sCosPower = xml.GetAttribute("cosPower");
-                    int iCosPower = 0;
-                    if (sCosPower != null)
-                        iCosPower = int.Parse(sCosPower);
-
-                    string sAlphaBlending = xml.GetAttribute("alphaBlending");
-                    bool iAlphaBlending = false;
-                    if (sAlphaBlending != null)
-                        iAlphaBlending = bool.Parse(sAlphaBlending);
-
-                    string sCustomShaderId = xml.GetAttribute("customShaderId");
-                    int iCustomShaderId = 0;
-                    if (sCustomShaderId != null)
-                        iCustomShaderId = int.Parse(sCustomShaderId);
-
                     I3DMaterial mat = new I3DMaterial()
                     {
                         Name = sName,
-                        Id = int.Parse(sMatId),
-                        CosPower = iCosPower,
-                        AlphaBlending = iAlphaBlending,
-                        CustomShaderId = iCustomShaderId,
+                        Id = ParseInt(sMatId),
+                        CosPower = ParseInt(xml.GetAttribute("cosPower")),
+                        AlphaBlending = ParseBool(xml.GetAttribute("alphaBlending")),
+                        CustomShaderId = ParseInt(xml.GetAttribute("customShaderId")),
                         AmbientColor = ParseColor(xml.GetAttribute("ambientColor")),
                         DiffuseColor = ParseColor(xml.GetAttribute("diffuseColor")),
                         SpecularColor = ParseColor(xml.GetAttribute("specularColor"))
@@ -189,6 +197,8 @@ namespace Assets.FarmSim.I3D
                         }
                         xml.Read();
                     }
+
+                    mats.Push(mat);
                 }
                 xml.Read();
             }
@@ -196,7 +206,7 @@ namespace Assets.FarmSim.I3D
             model.Materials = mats.ToArray();
         }
 
-        private void ParseFile_Shapes_VertSet(ref Stack<I3DShape> output, XmlReader xml)
+        private static void ParseFile_Shapes_VertSet(ref Stack<I3DShape> output, XmlReader xml)
         {
             Debug.Log("VertSet");
             string sId = xml.GetAttribute("shapeId");
@@ -294,27 +304,27 @@ namespace Assets.FarmSim.I3D
             XmlReaderExt.Read(xml);
         }
 
-        private void ParseFile_Shapes_Obj(ref Stack<I3DShape> output, StreamReader reader)
+        private static void ParseFile_Shapes_Obj(ref Stack<I3DShape> output, StreamReader reader)
         {
             Debug.Log("hi");
         }
 
-        private void ParseFile_Shapes(ref I3DModel output, XmlReader xml)
+        private static void ParseFile_Shapes(ref I3DModel output, XmlReader xml, string ObjFile)
         {
             XmlReaderExt.Read(xml);
 
             Stack<I3DShape> shapes = new Stack<I3DShape>();
 
             Debug.Log("ParseFile_Shapes");
-            Debug.Log(xml.LocalName);
-            Debug.Log(xml.HasAttributes);
-            Debug.Log(xml.AttributeCount);
+            Debug.Log("LocalName: " + xml.LocalName);
+            Debug.Log("Has attributes: " + xml.HasAttributes);
+            Debug.Log("Attribute Count: " + xml.AttributeCount);
             //If we detect that the model wants external file, we look for and parse the Obj file instead
             string attr = xml.GetAttribute("externalShapesFile");
-            Debug.Log(attr);
-            Debug.Log(useObjFile);
+            Debug.Log("externalShapesFile: " + attr);
+            Debug.Log("Use .obj File: " + (ObjFile.Length > 0));
 
-            if (attr != null && useObjFile)
+            if (attr != null && ObjFile.Length > 0)
             {
                 if (!File.Exists(ObjFile))
                     throw new FileNotFoundException("Obj file not found.");
@@ -342,27 +352,106 @@ namespace Assets.FarmSim.I3D
                         ParseFile_Shapes_VertSet(ref shapes, xml);
                         break;
                 }
-                Debug.Log(xml.NodeType);
-                Debug.Log(xml.LocalName);
             }
 
             output.Shapes = shapes.ToArray();
         }
 
-        private void ParseFile_SceneShapes(ref I3DModel output, XmlReader xml)
+        private static I3DSceneShape ParseFile_SceneShapesAttributes(XmlReader xml)
         {
-
+            return new I3DSceneShape()
+            {
+                Name = ParseString(xml.GetAttribute("name")),
+                ShapeId = ParseInt(xml.GetAttribute("shapeId")),
+                NodeId = ParseInt(xml.GetAttribute("nodeId")),
+                Dynamic = ParseBool(xml.GetAttribute("dynamic")),
+                Density = ParseFloat(xml.GetAttribute("density")),
+                CollisionMask = ParseInt(xml.GetAttribute("collisionMask")),
+                CastShadows = ParseBool(xml.GetAttribute("castsShadows")),
+                ReceiveShadows = ParseBool(xml.GetAttribute("receiveShadows")),
+                NonRenderable = ParseBool(xml.GetAttribute("nonRenderable")),
+                MaterialIds = ParseInt(xml.GetAttribute("materialIds")),
+                ObjectMask = ParseInt(xml.GetAttribute("objectMask")),
+                ClipDistance = ParseInt(xml.GetAttribute("clipDistance")),
+                Translation = ParseVector3(xml.GetAttribute("translation")),
+                Visibility = ParseBool(xml.GetAttribute("visibility")),
+                Kinematic = ParseBool(xml.GetAttribute("kinematic")),
+                Trigger = ParseBool(xml.GetAttribute("trigger"))
+            };
         }
 
-        private bool useObjFile = false;
-        private string mObjFile;
+        private static void ParseFile_SceneShapesInner(ref Stack<I3DSceneShape> parent, XmlReader xml, int depth)
+        {
+            I3DSceneShape shape = ParseFile_SceneShapesAttributes(xml);
+            Stack<I3DSceneShape> children = new Stack<I3DSceneShape>();
+            bool empty = xml.IsEmptyElement;
+
+            Debug.Log(ParseString(xml.GetAttribute("name")));
+            string curname = ParseString(xml.GetAttribute("name"));
+
+            if (!empty)
+            {
+                XmlReaderExt.Read(xml);
+                while (XmlReaderExt.SafeCheckEndElement(xml))
+                {
+                    ParseFile_SceneShapesInner(ref children, xml, depth + 1);
+                    XmlReaderExt.Read(xml);
+                    curname = ParseString(xml.GetAttribute("name"));
+                }
+            }
+
+            shape.SceneShapes = children.ToArray();
+
+            parent.Push(shape);
+        }
+        private static void ParseFile_SceneShapes(ref I3DModel model, XmlReader xml)
+        {
+            Stack<I3DSceneShape> shapes = new Stack<I3DSceneShape>();
+
+            xml.Read();
+
+            while (XmlReaderExt.SafeCheckEndElement(xml))
+            {
+                if (xml.NodeType == XmlNodeType.Whitespace)
+                {
+                    xml.Read();
+                    continue;
+                }
+
+                I3DSceneShape shape = ParseFile_SceneShapesAttributes(xml);
+                Stack<I3DSceneShape> children = new Stack<I3DSceneShape>();
+                bool empty = xml.IsEmptyElement;
+
+                XmlReaderExt.Read(xml);
+                string curname = ParseString(xml.GetAttribute("name"));
+                //xml.MoveToContent();
+                while (!empty && XmlReaderExt.SafeCheckEndElement(xml))
+                {
+                    ParseFile_SceneShapesInner(ref children, xml, 0);
+                    XmlReaderExt.Read(xml);
+                    curname = ParseString(xml.GetAttribute("name"));
+                }
+
+                shape.SceneShapes = children.ToArray();
+
+                shapes.Push(shape);
+
+                xml.Read();
+            }
+
+            model.SceneShapes = shapes.ToArray();
+        }
+
+        private string mObjFile = "";
 
         public string ObjFile
         {
-            get { return mObjFile; }
+            get
+            {
+                return mObjFile;
+            }
             set
             {
-                useObjFile = true;
                 mObjFile = value;
             }
         }
@@ -395,7 +484,7 @@ namespace Assets.FarmSim.I3D
                             ParseFile_Materials(ref output, xml);
                             break;
                         case "Shapes":
-                            ParseFile_Shapes(ref output, xml);
+                            ParseFile_Shapes(ref output, xml, ObjFile);
                             break;
                         case "Scene":
                             ParseFile_SceneShapes(ref output, xml);
