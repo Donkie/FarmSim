@@ -14,9 +14,13 @@ namespace Assets.FarmSim.I3D
         public bool AlphaBlending;
 
         public int TextureFileId;
+        public I3DFile TextureFile;
         public int NormalMapFileId;
+        public I3DFile NormalMapFile;
         public int GlossMapFileId;
+        public I3DFile GlossMapFile;
         public int EmissiveMapFileId;
+        public I3DFile EmissiveMapFile;
         public I3DMap ReflectionMap;
     }
 }
