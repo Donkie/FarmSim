@@ -25,9 +25,6 @@ namespace Assets
             {
                 MeshFilter mesh = part.GetComponent<MeshFilter>();
                 mesh.mesh = shape.Shape.Mesh;
-
-                if (!part.IsVisible())
-                    mesh.renderer.enabled = false;
             }
 
             foreach (I3DSceneShape s in shape.Scenes)

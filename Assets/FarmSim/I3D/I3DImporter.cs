@@ -211,6 +211,8 @@ namespace Assets.FarmSim.I3D
                                 mat.GlossMapFileId = fileId;
                                 break;
                             case "Reflectionmap":
+                                mat.ReflectionMap = file;
+                                mat.ReflectionMapId = fileId;
                                 break;
                         }
 

@@ -2,7 +2,7 @@ using System;
 
 namespace Assets.FarmSim.I3D
 {
-    public struct I3DMap
+    public class I3DMap
     {
         public int FileId;
         public bool Wrap;

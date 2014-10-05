@@ -21,6 +21,7 @@ namespace Assets.FarmSim.I3D
         public I3DFile GlossMapFile;
         public int EmissiveMapFileId;
         public I3DFile EmissiveMapFile;
-        public I3DMap ReflectionMap;
+        public int ReflectionMapId;
+        public I3DFile ReflectionMap;
     }
 }

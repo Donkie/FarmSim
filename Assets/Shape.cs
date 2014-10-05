@@ -8,7 +8,19 @@ namespace Assets
     public class Shape : MonoBehaviour
     {
         public I3DSceneShape Scene;
+        [HideInInspector]
         public Texture2D Tex;
+
+        private bool visible = false;
+        public bool Visible
+        {
+            get { return this.visible; }
+            set
+            {
+                this.visible = value;
+                this.GetComponent<MeshFilter>().renderer.enabled = value;
+            }
+        }
 
         private bool VisibleInnerCheck(I3DSceneShape shape)
         {
@@ -24,7 +36,7 @@ namespace Assets
             }
         }
 
-        public bool IsVisible()
+        private bool DeepIsVisible()
         {
             if (Scene.NonRenderable)
                 return false;
@@ -32,7 +44,7 @@ namespace Assets
             return VisibleInnerCheck(Scene);
         }
 
-        public static Texture2D LoadTextureDxt(byte[] ddsBytes, TextureFormat textureFormat)
+        public static Texture2D LoadTextureDxt(byte[] ddsBytes, TextureFormat textureFormat = TextureFormat.DXT5)
         {
             if (textureFormat != TextureFormat.DXT1 && textureFormat != TextureFormat.DXT5)
                 throw new Exception("Invalid TextureFormat. Only DXT1 and DXT5 formats are supported by this method.");
@@ -52,23 +64,35 @@ namespace Assets
             texture.LoadRawTextureData(dxtBytes);
             texture.Apply();
 
-            return (texture);
+            return texture;
         }
 
         public Texture2D LoadTexture(string url)
         {
             byte[] bytes = System.IO.File.ReadAllBytes(url);
-            return LoadTextureDxt(bytes, TextureFormat.DXT5);
+            return LoadTextureDxt(bytes);
         }
 
         public void Setup()
         {
-            if (this.Scene.Material.TextureFile == null)
-                return;
+            //Assign material
+            if (this.Scene.Material.TextureFile != null)
+            {
+                Material mat = this.renderer.material;
+                mat.SetTexture("_MainTex", LoadTexture(this.Scene.Material.TextureFile.AbsolutePath));
 
-            Renderer re = this.renderer;
-            Material mat = re.material;
-            mat.mainTexture = LoadTexture(this.Scene.Material.TextureFile.AbsolutePath);
+                if (this.Scene.Material.NormalMapFile != null)
+                    mat.SetTexture("_BumpMap", LoadTexture(this.Scene.Material.NormalMapFile.AbsolutePath));
+
+                if (this.Scene.Material.ReflectionMap != null)
+                    mat.SetTexture("_Cube", LoadTexture(this.Scene.Material.ReflectionMap.AbsolutePath));
+            }
+
+            //Assign name
+            this.name = Scene.Name;
+
+            //Check visibility
+            this.Visible = DeepIsVisible();
         }
         
         // Use this for initialization
