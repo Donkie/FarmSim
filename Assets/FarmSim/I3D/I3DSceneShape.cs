@@ -1,27 +1,33 @@
 using System;
 using System.Linq;
+using Assets.Components;
 using UnityEngine;
+using Transform = Assets.Components.Transform;
 
 namespace Assets.FarmSim.I3D
 {
-    public class I3DSceneShape
+    public class I3DSceneShape : ComponentBase
     {
-        public string Name;
-        public float Density;
-        public int ShapeId;
-        public int NodeId;
-        public int MaterialIds;
-        public int CollisionMask;
-        public int ObjectMask;
-        public int ClipDistance;
-        public bool CastShadows;
-        public bool ReceiveShadows;
-        public bool NonRenderable;
-        public bool Visibility = true;
-        public bool Kinematic;
-        public bool Trigger;
-        public bool Dynamic;
-        public Vector3 Translation;
+        public string Name
+        {
+            get { return GetComponent<Transform>().Name; }
+        }
+
+        public Vector3 Translation
+        {
+            get { return GetComponent<Transform>().Translation; }
+        }
+
+        public bool Visibility
+        {
+            get { return GetComponent<Transform>().Visibility; }
+        }
+
+        public bool NonRenderable
+        {
+            get { return GetComponent<Shape>().NonRenderable; }
+        }
+
         public I3DSceneShape[] Scenes;
         public I3DShape Shape;
         public I3DSceneShape Parent;

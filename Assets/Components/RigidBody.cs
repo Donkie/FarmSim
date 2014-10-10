@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Assets
+﻿namespace Assets.Components
 {
     public enum RigidBodyType
     {
@@ -8,10 +6,16 @@ namespace Assets
         Dynamic = 1,
         Kinematic = 2
     }
-    public class RigidBody : MonoBehaviour
+    public class RigidBody : ComponentBase
     {
         public RigidBodyType Type;
+        /// <summary>
+        /// Some sort of grouping of physobjects?
+        /// </summary>
         public bool Compound;
+        /// <summary>
+        /// Tells us this is a child of a compound, should be physically active
+        /// </summary>
         public bool CompoundChild;
         public bool Collision;
         public bool Trigger;
