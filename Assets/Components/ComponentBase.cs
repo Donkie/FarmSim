@@ -8,10 +8,6 @@ namespace Assets.Components
     {
         List<ComponentBase> components = new List<ComponentBase>();
 
-        public ComponentBase()
-        {
-        }
-
         public T1 GetComponent<T1>() where T1 : ComponentBase
         {
             return components.OfType<T1>().FirstOrDefault();

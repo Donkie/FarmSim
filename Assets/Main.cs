@@ -7,11 +7,11 @@ namespace Assets
 {
     public class Main : MonoBehaviour
     {
-        public Object GenericShape;
+        public GameObject GenericShape;
 
-        private Object SpawnVehicle_Rec(I3DModel model, I3DSceneShape shape, Object parent)
+        private Object SpawnVehicle_Rec(I3DModel model, I3DSceneShape shape, GameObject parent)
         {
-            Object part = Instantiate(GenericShape, shape.Translation, Quaternion.identity) as Object;
+            GameObject part = Instantiate(GenericShape, shape.Translation, Quaternion.identity) as GameObject;
             if (part == null)
                 return null;
 
@@ -42,7 +42,7 @@ namespace Assets
             return SpawnVehicle_Rec(model, shape, null);
         }
 
-        private void Start()
+        public void Start()
         {
             Debug.Log("Start");
 

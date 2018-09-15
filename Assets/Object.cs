@@ -18,7 +18,7 @@ namespace Assets
             set
             {
                 this.visible = value;
-                this.GetComponent<MeshFilter>().renderer.enabled = value;
+                this.GetComponent<MeshFilter>().GetComponent<Renderer>().enabled = value;
             }
         }
 
@@ -78,7 +78,7 @@ namespace Assets
             //Assign material
             if (this.Scene.Material.TextureFile != null)
             {
-                Material mat = this.renderer.material;
+                Material mat = this.GetComponent<Renderer>().material;
                 mat.SetTexture("_MainTex", LoadTexture(this.Scene.Material.TextureFile.AbsolutePath));
 
                 if (this.Scene.Material.NormalMapFile != null)
