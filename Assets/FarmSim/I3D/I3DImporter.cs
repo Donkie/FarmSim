@@ -8,6 +8,7 @@ using System.Xml;
 using Assets.Components;
 using UnityEngine;
 using Transform = Assets.Components.Transform;
+using I3DShapesTool;
 
 namespace Assets.FarmSim.I3D
 {
@@ -29,7 +30,7 @@ namespace Assets.FarmSim.I3D
             foreach (Match match in colorRegex.Matches(col))
             {
                 if (match.Success)
-                    output[i] = float.Parse(match.Value);
+                    output[i] = float.Parse(match.Value, CultureInfo.InvariantCulture);
 
                 i++;
             }
@@ -319,32 +320,37 @@ namespace Assets.FarmSim.I3D
 
             XmlReaderExt.Read(xml);
         }
-
-        private static void ParseFile_Shapes_Obj(ref Stack<I3DShape> output, StreamReader reader)
+        
+        private static void ParseFile_Shapes(ref I3DModel output, XmlReader xml)
         {
-            Debug.Log("Parse Obj");
-        }
-
-        private static void ParseFile_Shapes(ref I3DModel output, XmlReader xml, string ObjFile)
-        {
-            XmlReaderExt.Read(xml);
+            //XmlReaderExt.Read(xml);
 
             Stack<I3DShape> shapes = new Stack<I3DShape>();
 
-            //If we detect that the model wants external file, we look for and parse the Obj file instead
+            xml.MoveToFirstAttribute();
+            
             string attr = xml.GetAttribute("externalShapesFile");
-
-            if (attr != null && ObjFile.Length > 0)
+            if (attr != null)
             {
-                if (!File.Exists(ObjFile))
-                    throw new FileNotFoundException("Obj file not found.");
+                string fullPath = Path.Combine(output.Path, attr);
+                Debug.Log($"Shapes full path: {fullPath}");
+                if (!File.Exists(fullPath))
+                    throw new FileNotFoundException($"{fullPath} not found.");
 
-                using (StreamReader reader = new StreamReader(ObjFile))
+
+                I3DShapesTool.I3DShape[] toolShapes = I3DShapeTool.ParseShapesFile(fullPath);
+                foreach (I3DShapesTool.I3DShape toolShape in toolShapes)
                 {
-                    ParseFile_Shapes_Obj(ref shapes, reader);
+                    shapes.Push(new I3DShape
+                    {
+                        Id = toolShape.ShapeId,
+                        Name = toolShape.Name,
+                        Mesh = toolShape.Mesh
+                    });
                 }
 
                 output.Shapes = shapes.ToArray();
+
                 return;
             }
 
@@ -429,26 +435,29 @@ namespace Assets.FarmSim.I3D
                 }
             }
 
-            //Assign the shape object according to ID
-            foreach (I3DShape sh in model.Shapes)
+            if (shape.GetComponent<Shape>() != null)
             {
-                if (shape.GetComponent<Shape>().ShapeId != sh.Id)
-                    continue;
-
-                shape.Shape = sh;
-                break;
-            }
-
-            //Assign material according to ID
-            for (int i = 0; i < shape.GetComponent<Shape>()._Materials.Length; i++)
-            {
-                int s = shape.GetComponent<Shape>()._Materials[i];
-                foreach (I3DMaterial mat in model.Materials)
+                //Assign the shape object according to ID
+                foreach (I3DShape sh in model.Shapes)
                 {
-                    if (mat.Id != s)
+                    if (shape.GetComponent<Shape>().ShapeId != sh.Id)
                         continue;
 
-                    shape.GetComponent<Shape>().Materials[i] = mat;
+                    shape.Shape = sh;
+                    break;
+                }
+
+                //Assign material according to ID
+                for (int i = 0; i < shape.GetComponent<Shape>()._Materials.Length; i++)
+                {
+                    int s = shape.GetComponent<Shape>()._Materials[i];
+                    foreach (I3DMaterial mat in model.Materials)
+                    {
+                        if (mat.Id != s)
+                            continue;
+
+                        shape.GetComponent<Shape>().Materials[i] = mat;
+                    }
                 }
             }
 
@@ -514,14 +523,7 @@ namespace Assets.FarmSim.I3D
 
             model.Scenes = shapes.ToArray();
         }
-
-        public I3DImporter()
-        {
-            ObjFile = "";
-        }
-
-        public string ObjFile { get; set; }
-
+        
         public string PrintTime(ref int start)
         {
             string s = "Time Elapsed: " + (Environment.TickCount - start) + "ms";
@@ -561,7 +563,7 @@ namespace Assets.FarmSim.I3D
                             Debug.Log("Parsing Materials: " + PrintTime(ref start));
                             break;
                         case "Shapes":
-                            ParseFile_Shapes(ref output, xml, ObjFile);
+                            ParseFile_Shapes(ref output, xml);
                             Debug.Log("Parsing Shapes: " + PrintTime(ref start));
                             break;
                         case "Scene":

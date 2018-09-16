@@ -5,20 +5,22 @@ using UnityEngine;
 
 namespace Assets
 {
-    public class Object : MonoBehaviour
+    public class Entity : MonoBehaviour
     {
         public I3DSceneShape Scene;
         [HideInInspector]
         public Texture2D Tex;
 
-        private bool visible = false;
+        public string Name => Scene.Name;
+
+        private bool _visible;
         public bool Visible
         {
-            get { return this.visible; }
+            get { return _visible; }
             set
             {
-                this.visible = value;
-                this.GetComponent<MeshFilter>().GetComponent<Renderer>().enabled = value;
+                _visible = value;
+                GetComponent<MeshRenderer>().enabled = value;
             }
         }
 
@@ -76,23 +78,25 @@ namespace Assets
         public void Setup()
         {
             //Assign material
-            if (this.Scene.Material.TextureFile != null)
+            if (Scene.Material.TextureFile != null)
             {
-                Material mat = this.GetComponent<Renderer>().material;
-                mat.SetTexture("_MainTex", LoadTexture(this.Scene.Material.TextureFile.AbsolutePath));
+                Material mat = GetComponent<Renderer>().material;
+                mat.SetTexture("_MainTex", LoadTexture(Scene.Material.TextureFile.AbsolutePath));
 
-                if (this.Scene.Material.NormalMapFile != null)
-                    mat.SetTexture("_BumpMap", LoadTexture(this.Scene.Material.NormalMapFile.AbsolutePath));
+                if (Scene.Material.NormalMapFile != null)
+                    mat.SetTexture("_BumpMap", LoadTexture(Scene.Material.NormalMapFile.AbsolutePath));
 
-                if (this.Scene.Material.ReflectionMap != null)
-                    mat.SetTexture("_Cube", LoadTexture(this.Scene.Material.ReflectionMap.AbsolutePath));
+                if (Scene.Material.ReflectionMap != null)
+                    mat.SetTexture("_Cube", LoadTexture(Scene.Material.ReflectionMap.AbsolutePath));
             }
 
             //Assign name
-            this.name = Scene.Name;
+            name = Scene.Name;
 
             //Check visibility
-            this.Visible = DeepIsVisible();
+            Visible = DeepIsVisible();
+            //Visible = !Scene.NonRenderable;
+            //Visible = true;
         }
     }
 }

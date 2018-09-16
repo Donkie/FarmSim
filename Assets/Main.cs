@@ -7,11 +7,11 @@ namespace Assets
 {
     public class Main : MonoBehaviour
     {
-        public GameObject GenericShape;
+        public Entity GenericShape;
 
-        private Object SpawnVehicle_Rec(I3DModel model, I3DSceneShape shape, GameObject parent)
+        private Entity SpawnVehicle_Rec(I3DModel model, I3DSceneShape shape, Entity parent)
         {
-            GameObject part = Instantiate(GenericShape, shape.Translation, Quaternion.identity) as GameObject;
+            Entity part = Instantiate(GenericShape, shape.Translation, Quaternion.identity);
             if (part == null)
                 return null;
 
@@ -27,6 +27,8 @@ namespace Assets
                 mesh.mesh = shape.Shape.Mesh;
             }
 
+
+
             foreach (I3DSceneShape s in shape.Scenes)
             {
                 SpawnVehicle_Rec(model, s, part);
@@ -35,7 +37,7 @@ namespace Assets
             return part;
         }
 
-        public Object SpawnVehicle(I3DModel model)
+        public Entity SpawnVehicle(I3DModel model)
         {
             I3DSceneShape shape = model.Scenes[0];
 
@@ -53,7 +55,7 @@ namespace Assets
             //I3DModel model = importer.ParseFile(@"D:\SteamLibrary\SteamApps\common\Farming Simulator 2013\data\maps\map01.i3d");
             I3DModel model =
                 importer.ParseFile(
-                    "D:/SteamLibrary/SteamApps/common/Farming Simulator 2013/data/vehicles/cars/car1.i3d");
+                    "F:/SteamLibrary/steamapps/common/Farming Simulator 15/data/vehicles/steerable/cars/piQup.i3d");
 
             SpawnVehicle(model);
 

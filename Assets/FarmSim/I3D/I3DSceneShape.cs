@@ -8,25 +8,13 @@ namespace Assets.FarmSim.I3D
 {
     public class I3DSceneShape : ComponentBase
     {
-        public string Name
-        {
-            get { return GetComponent<Transform>().Name; }
-        }
+        public string Name => GetComponent<Transform>().Name;
 
-        public Vector3 Translation
-        {
-            get { return GetComponent<Transform>().Translation; }
-        }
+        public Vector3 Translation => GetComponent<Transform>().Translation;
 
-        public bool Visibility
-        {
-            get { return GetComponent<Transform>().Visibility; }
-        }
+        public bool Visibility => GetComponent<Transform>().Visibility;
 
-        public bool NonRenderable
-        {
-            get { return GetComponent<Shape>().NonRenderable; }
-        }
+        public bool NonRenderable => GetComponent<Shape>() != null && GetComponent<Shape>().NonRenderable;
 
         public I3DSceneShape[] Scenes;
         public I3DShape Shape;
