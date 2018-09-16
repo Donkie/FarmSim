@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Assets.Components;
 
 namespace Assets.FarmSim.I3D
 {
@@ -9,9 +10,9 @@ namespace Assets.FarmSim.I3D
         public string Path { get; set; }
         public I3DFile[] Files { get; set; }
         public I3DMaterial[] Materials { get; set; }
-        public I3DShape[] Shapes { get; set; }
-        public I3DSceneShape[] Scenes { get; set; }
+        public I3DShapeData[] ShapeDatas { get; set; }
 
+        /*
         public I3DSceneShape GetSceneById(string id)
         {
             foreach (I3DSceneShape s in Scenes.Where(s => s.Name == id))
@@ -19,5 +20,6 @@ namespace Assets.FarmSim.I3D
 
             throw new Exception("Invalid Scene with id " + id);
         }
+        */
     }
 }

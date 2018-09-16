@@ -1,11 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.FarmSim.I3D
 {
-    public struct I3DShape
+    public class I3DShapeData
     {
+        public int ID;
         public string Name;
-        public int Id;
         public Mesh Mesh;
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Assets.Components
+﻿using UnityEngine;
+
+namespace Assets.Components
 {
     public enum RigidBodyType
     {
@@ -6,7 +8,7 @@
         Dynamic = 1,
         Kinematic = 2
     }
-    public class RigidBody : ComponentBase
+    public class I3DRigidBody : MonoBehaviour
     {
         public RigidBodyType Type;
         /// <summary>

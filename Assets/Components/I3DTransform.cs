@@ -2,14 +2,14 @@
 
 namespace Assets.Components
 {
-    public class Transform : ComponentBase
+    public class I3DTransform : MonoBehaviour
     {
         public string Name;
         public int Id;
         public string IndexPath;
-        public Vector3 Translation;
-        public Vector3 Rotation;
-        public Vector3 Scale;
+        //public Vector3 Translation;
+        //public Vector3 Rotation;
+        //public Vector3 Scale;
         public bool Visibility;
         public int ClipDistance;
         public int MinClipDistance;

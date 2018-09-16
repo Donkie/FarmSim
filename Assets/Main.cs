@@ -8,8 +8,8 @@ namespace Assets
     public class Main : MonoBehaviour
     {
         public Entity GenericShape;
-
-        private Entity SpawnVehicle_Rec(I3DModel model, I3DSceneShape shape, Entity parent)
+        /*
+        private Entity SpawnVehicleRecurse(I3DModel model, I3DSceneShape shape, Entity parent)
         {
             Entity part = Instantiate(GenericShape, shape.Translation, Quaternion.identity);
             if (part == null)
@@ -31,36 +31,35 @@ namespace Assets
 
             foreach (I3DSceneShape s in shape.Scenes)
             {
-                SpawnVehicle_Rec(model, s, part);
+                SpawnVehicleRecurse(model, s, part);
             }
 
             return part;
         }
-
-        public Entity SpawnVehicle(I3DModel model)
+        */
+        private I3DImporter _importer;
+        public Entity SpawnVehicle(string file, Vector3 position)
         {
-            I3DSceneShape shape = model.Scenes[0];
+            Entity part = Instantiate(GenericShape, position, Quaternion.identity);
+            if (part == null)
+                return null;
+            
+            I3DModel model = _importer.ParseFile(part, file);
+            return part;
+            //I3DSceneShape shape = model.Scenes[0];
 
-            return SpawnVehicle_Rec(model, shape, null);
+            //return SpawnVehicleRecurse(model, shape, null);
         }
 
         public void Start()
         {
             Debug.Log("Start");
+            
+            _importer = new I3DImporter();
+            I3DImporter.GenericShape = GenericShape;
 
-            I3DImporter importer = new I3DImporter();
-            //importer.ObjFile = @"D:\SteamLibrary\SteamApps\common\Farming Simulator 2013\data\maps\map01.obj";
-            //importer.ObjFile = @"D:\SteamLibrary\SteamApps\common\Farming Simulator 2013\data\vehicles\balers\kroneBigPack1290.obj";
-
-            //I3DModel model = importer.ParseFile(@"D:\SteamLibrary\SteamApps\common\Farming Simulator 2013\data\maps\map01.i3d");
-            I3DModel model =
-                importer.ParseFile(
-                    "F:/SteamLibrary/steamapps/common/Farming Simulator 15/data/vehicles/steerable/cars/piQup.i3d");
-
-            SpawnVehicle(model);
-
-            /*MeshFilter modelmesh = (MeshFilter) Instantiate(Vehicle);
-            modelmesh.mesh = model.GetSceneById("car_01").GetSceneById("car_01_vis").Shape.Mesh;*/
+            SpawnVehicle("F:/SteamLibrary/steamapps/common/Farming Simulator 15/data/vehicles/steerable/cars/piQup.i3d", Vector3.zero);
+            
         }
     }
 }

@@ -1,15 +1,18 @@
 ﻿using Assets.FarmSim.I3D;
+using UnityEngine;
 
 namespace Assets.Components
 {
-    public class Shape : ComponentBase
+    public class Shape : MonoBehaviour
     {
-        public int ShapeId;
+        public string Name;
+        public int ID;
+        public Mesh Mesh;
         public bool CastShadows;
         public bool ReceiveShadows;
         public bool NonRenderable;
         public int BuildNavMeshMask = 0;
-        public I3DMaterial[] Materials = new I3DMaterial[8];
+        public I3DMaterial[] Materials;
         public int[] _Materials;
 
         public static int[] ParseMaterialString(string s)

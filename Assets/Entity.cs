@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Assets.Components;
 using Assets.FarmSim.I3D;
 using UnityEngine;
 
@@ -7,12 +8,10 @@ namespace Assets
 {
     public class Entity : MonoBehaviour
     {
-        public I3DSceneShape Scene;
+        public Shape Shape;
         [HideInInspector]
         public Texture2D Tex;
-
-        public string Name => Scene.Name;
-
+        
         private bool _visible;
         public bool Visible
         {
@@ -24,47 +23,66 @@ namespace Assets
             }
         }
 
-        private bool VisibleInnerCheck(I3DSceneShape shape)
+        private bool VisibleInnerCheck(GameObject part)
         {
             while (true)
             {
-                if (shape.Visibility == false)
+                if (part.GetComponent<I3DTransform>().Visibility == false)
                     return false;
 
-                if (shape.Parent == null)
+                if (part.transform.parent == null)
                     return true;
 
-                shape = shape.Parent;
+                part = part.transform.parent.gameObject;
             }
         }
 
         private bool DeepIsVisible()
         {
-            if (Scene.NonRenderable)
+            if (!Shape || Shape.NonRenderable)
                 return false;
 
-            return VisibleInnerCheck(Scene);
+            if (gameObject.transform.parent == null)
+                return true;
+
+            return VisibleInnerCheck(gameObject.transform.parent.gameObject);
         }
 
-        public static Texture2D LoadTextureDxt(byte[] ddsBytes, TextureFormat textureFormat = TextureFormat.DXT5)
+        public static Texture2D LoadTextureDxt(byte[] ddsBytes)
         {
-            if (textureFormat != TextureFormat.DXT1 && textureFormat != TextureFormat.DXT5)
-                throw new Exception("Invalid TextureFormat. Only DXT1 and DXT5 formats are supported by this method.");
-
-            byte ddsSizeCheck = ddsBytes[4];
+            byte ddsSizeCheck = ddsBytes[0x4];
             if (ddsSizeCheck != 124)
                 throw new Exception("Invalid DDS DXTn texture. Unable to read");  //this header byte should be 124 for DDS image files
+            
+            int height = ddsBytes[0xF] << 24 | ddsBytes[0xE] << 16 | ddsBytes[0xD] << 8 | ddsBytes[0xC];
+            int width = ddsBytes[0x13] << 24 | ddsBytes[0x12] << 16 | ddsBytes[0x11] << 8 | ddsBytes[0x10];
 
-            int height = ddsBytes[13] * 256 + ddsBytes[12];
-            int width = ddsBytes[17] * 256 + ddsBytes[16];
+            int mipmapCount = ddsBytes[0x1F] << 24 | ddsBytes[0x1E] << 16 | ddsBytes[0x1D] << 8 | ddsBytes[0x1C];
+
+            TextureFormat textureFormat;
+            string texFormatStr = System.Text.Encoding.ASCII.GetString(ddsBytes, 0x54, 4);
+            switch (texFormatStr)
+            {
+                case "DXT1":
+                    textureFormat = TextureFormat.DXT1;
+                    break;
+                case "DXT5":
+                    textureFormat = TextureFormat.DXT5;
+                    break;
+                default:
+                    throw new Exception($"Unknown texture format {texFormatStr}");
+            }
 
             const int ddsHeaderSize = 128;
             byte[] dxtBytes = new byte[ddsBytes.Length - ddsHeaderSize];
             Buffer.BlockCopy(ddsBytes, ddsHeaderSize, dxtBytes, 0, ddsBytes.Length - ddsHeaderSize);
 
-            Texture2D texture = new Texture2D(width, height, textureFormat, false);
+            Texture2D texture = new Texture2D(width, height, textureFormat, false, false);
+            
             texture.LoadRawTextureData(dxtBytes);
             texture.Apply();
+
+
 
             return texture;
         }
@@ -78,20 +96,38 @@ namespace Assets
         public void Setup()
         {
             //Assign material
-            if (Scene.Material.TextureFile != null)
+            if (Shape != null)
             {
-                Material mat = GetComponent<Renderer>().material;
-                mat.SetTexture("_MainTex", LoadTexture(Scene.Material.TextureFile.AbsolutePath));
+                foreach (I3DMaterial shapeMaterial in Shape.Materials)
+                {
+                    if (shapeMaterial.TextureFile == null)
+                        continue;
 
-                if (Scene.Material.NormalMapFile != null)
-                    mat.SetTexture("_BumpMap", LoadTexture(Scene.Material.NormalMapFile.AbsolutePath));
+                    Material mat = GetComponent<Renderer>().material;
+                    mat.mainTextureScale = new Vector2(1, -1);
+                    try
+                    {
+                        mat.mainTexture = LoadTexture(shapeMaterial.TextureFile.AbsolutePath);
+                    }
+                    catch (UnityException e)
+                    {
+                        Debug.LogError($"Failed to parse texture {shapeMaterial.TextureFile.AbsolutePath}\n{e.Message}");
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError($"Failed to parse texture {shapeMaterial.TextureFile.AbsolutePath}\n{e.Message}");
+                    }
 
-                if (Scene.Material.ReflectionMap != null)
-                    mat.SetTexture("_Cube", LoadTexture(Scene.Material.ReflectionMap.AbsolutePath));
+                    if (shapeMaterial.NormalMapFile != null)
+                        mat.SetTexture("_BumpMap", LoadTexture(shapeMaterial.NormalMapFile.AbsolutePath));
+
+                    //if (shapeMaterial.ReflectionMap != null)
+                    //    mat.SetTexture("_Cube", LoadTexture(shapeMaterial.ReflectionMap.AbsolutePath));
+                }
             }
 
             //Assign name
-            name = Scene.Name;
+            name = GetComponent<I3DTransform>().Name;
 
             //Check visibility
             Visible = DeepIsVisible();
