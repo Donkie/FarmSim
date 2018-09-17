@@ -169,7 +169,7 @@ namespace Assets.FarmSim.I3D
                 string sMatId = xml.GetAttribute("materialId");
                 if (sName != null && sMatId != null)
                 {
-                    I3DMaterial mat = new I3DMaterial()
+                    I3DMaterial mat = new I3DMaterial
                     {
                         Name = sName,
                         Id = ParseInt(sMatId),
