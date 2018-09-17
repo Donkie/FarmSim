@@ -152,6 +152,17 @@ namespace Assets
                     if (shapeMaterial.NormalMapFile != null)
                         mat.SetTexture("_BumpMap", LoadTexture(shapeMaterial.NormalMapFile.AbsolutePath));
 
+                    if (shapeMaterial.AlphaBlending)
+                    {
+                        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                        mat.SetInt("_ZWrite", 0);
+                        mat.DisableKeyword("_ALPHATEST_ON");
+                        mat.DisableKeyword("_ALPHABLEND_ON");
+                        mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                        mat.renderQueue = 3000;
+                    }
+
                     //if (shapeMaterial.ReflectionMap != null)
                     //    mat.SetTexture("_Cube", LoadTexture(shapeMaterial.ReflectionMap.AbsolutePath));
                 }
