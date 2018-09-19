@@ -6,8 +6,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Assets.Components;
+using Assets.I3DShapesTool;
 using UnityEngine;
-using I3DShapesTool;
 
 namespace Assets.FarmSim.I3D
 {
@@ -337,7 +337,7 @@ namespace Assets.FarmSim.I3D
                     throw new FileNotFoundException($"{fullPath} not found.");
 
 
-                I3DShape[] toolShapes = I3DShapeTool.ParseShapesFile(fullPath);
+                I3DShape[] toolShapes = I3DShapeTool.LoadShapesFile(fullPath);
                 foreach (I3DShape toolShape in toolShapes)
                 {
                     shapes.Push(new I3DShapeData
@@ -374,75 +374,69 @@ namespace Assets.FarmSim.I3D
 
         private static void ParseFile_SceneShapesAttributes(XmlReader xml, ref I3DModel model, Entity part)
         {
-            if (xml.GetAttribute("name") != null)
-            {
-                //I3DTransform
-                I3DTransform t = part.gameObject.AddComponent<I3DTransform>();
-                t.Name = ParseString(xml.GetAttribute("name"));
-                t.Id = ParseInt(xml.GetAttribute("nodeId"));
-                t.IndexPath = ""; //TODO: Make this
-                t.Visibility = ParseBool(xml.GetAttribute("visibility"), true);
-                t.ClipDistance = ParseInt(xml.GetAttribute("clipDistance"), 1000000);
-                t.MinClipDistance = ParseInt(xml.GetAttribute("minClipDistance"));
-                t.ObjectMask = ParseInt(xml.GetAttribute("objectMask"), 0xffff);
-                t.LOD = ParseBool(xml.GetAttribute("lodDistance"));
+            //I3DTransform
+            I3DTransform t = part.gameObject.AddComponent<I3DTransform>();
+            t.Name = ParseString(xml.GetAttribute("name"));
+            t.Id = ParseInt(xml.GetAttribute("nodeId"));
+            t.IndexPath = ""; //TODO: Make this
+            t.Visibility = ParseBool(xml.GetAttribute("visibility"), true);
+            t.ClipDistance = ParseInt(xml.GetAttribute("clipDistance"), 1000000);
+            t.MinClipDistance = ParseInt(xml.GetAttribute("minClipDistance"));
+            t.ObjectMask = ParseInt(xml.GetAttribute("objectMask"), 0xffff);
+            t.LOD = ParseBool(xml.GetAttribute("lodDistance"));
                 
-                //Transform
-                part.gameObject.transform.localPosition = ParseVector3(xml.GetAttribute("translation"));
-                part.gameObject.transform.localEulerAngles = ParseVector3(xml.GetAttribute("rotation"));
-                Vector3 scale = xml.GetAttribute("scale") != null ? ParseVector3(xml.GetAttribute("scale")) : Vector3.one;
-                //scale.x *= -1;
-                part.gameObject.transform.localScale = scale;
+            //Transform
+            part.gameObject.transform.localPosition = ParseVector3(xml.GetAttribute("translation"));
+            part.gameObject.transform.localEulerAngles = ParseVector3(xml.GetAttribute("rotation"));
+            Vector3 scale = xml.GetAttribute("scale") != null ? ParseVector3(xml.GetAttribute("scale")) : Vector3.one;
+            //scale.x *= -1;
+            part.gameObject.transform.localScale = scale;
 
-                //Rigidbody
-                bool bStatic = ParseBool(xml.GetAttribute("static"));
-                bool bDynamic = ParseBool(xml.GetAttribute("dynamic"));
-                bool bKinematic = ParseBool(xml.GetAttribute("kinematic"));
+            //Rigidbody
+            bool bStatic = ParseBool(xml.GetAttribute("static"));
+            bool bDynamic = ParseBool(xml.GetAttribute("dynamic"));
+            bool bKinematic = ParseBool(xml.GetAttribute("kinematic"));
 
-                if (bStatic || bDynamic || bKinematic)
-                {
-                    t.RigidBody = true;
+            if (bStatic || bDynamic || bKinematic)
+            {
+                t.RigidBody = true;
 
-                    I3DRigidBody r = part.gameObject.AddComponent<I3DRigidBody>();
-                    if(bStatic)
-                        r.Type = RigidBodyType.Static;
-                    else if (bDynamic)
-                        r.Type = RigidBodyType.Dynamic;
-                    else
-                        r.Type = RigidBodyType.Kinematic;
+                I3DRigidBody r = part.gameObject.AddComponent<I3DRigidBody>();
+                if(bStatic)
+                    r.Type = RigidBodyType.Static;
+                else if (bDynamic)
+                    r.Type = RigidBodyType.Dynamic;
+                else
+                    r.Type = RigidBodyType.Kinematic;
 
-                    r.Compound = ParseBool(xml.GetAttribute("compound"));
-                    r.CompoundChild = ParseBool(xml.GetAttribute("compoundChild"));
-                    r.Collision = ParseBool(xml.GetAttribute("collision"), true);
-                    r.Trigger = ParseBool(xml.GetAttribute("trigger"));
-                    r.CollisionMask = ParseInt(xml.GetAttribute("collisionMask"));
-                    r.Restitution = ParseFloat(xml.GetAttribute("restitution"));
-                    r.StaticFriction = ParseFloat(xml.GetAttribute("staticFriction"), 0.5f);
-                    r.DynamicFriction = ParseFloat(xml.GetAttribute("dynamicFriction"), 0.5f);
-                    r.LinearDamping = ParseFloat(xml.GetAttribute("linearDamping"), 0.5f);
-                    r.AngularDamping = ParseFloat(xml.GetAttribute("angularDamping"), 0.5f);
-                    r.Density = ParseFloat(xml.GetAttribute("density"), 1);
-                    r.SolverIterations = ParseInt(xml.GetAttribute("solverIterationCount"), 4);
-                    //r.Mass = ParseFloat(xml.GetAttribute("mass"), 0.5f);
-                }
-
-                //Shape
-                if (xml.LocalName == "Shape")
-                {
-                    Shape s = part.gameObject.AddComponent<Shape>();
-                    s.ID = ParseInt(xml.GetAttribute("shapeId"));
-                    s.CastShadows = ParseBool(xml.GetAttribute("castsShadows"));
-                    s.ReceiveShadows = ParseBool(xml.GetAttribute("receiveShadows"));
-                    s.NonRenderable = ParseBool(xml.GetAttribute("nonRenderable"));
-                    s.BuildNavMeshMask = ParseInt(xml.GetAttribute("buildNavMeshMask"), 0x0);
-                    s._Materials = Shape.ParseMaterialString(ParseString(xml.GetAttribute("materialIds")));
-
-                    part.Shape = s;
-                }
+                r.Compound = ParseBool(xml.GetAttribute("compound"));
+                r.CompoundChild = ParseBool(xml.GetAttribute("compoundChild"));
+                r.Collision = ParseBool(xml.GetAttribute("collision"), true);
+                r.Trigger = ParseBool(xml.GetAttribute("trigger"));
+                r.CollisionMask = ParseInt(xml.GetAttribute("collisionMask"));
+                r.Restitution = ParseFloat(xml.GetAttribute("restitution"));
+                r.StaticFriction = ParseFloat(xml.GetAttribute("staticFriction"), 0.5f);
+                r.DynamicFriction = ParseFloat(xml.GetAttribute("dynamicFriction"), 0.5f);
+                r.LinearDamping = ParseFloat(xml.GetAttribute("linearDamping"), 0.5f);
+                r.AngularDamping = ParseFloat(xml.GetAttribute("angularDamping"), 0.5f);
+                r.Density = ParseFloat(xml.GetAttribute("density"), 1);
+                r.SolverIterations = ParseInt(xml.GetAttribute("solverIterationCount"), 4);
+                //r.Mass = ParseFloat(xml.GetAttribute("mass"), 0.5f);
             }
 
-            if (part.Shape != null)
+            //Shape
+            if (xml.LocalName == "Shape")
             {
+                Shape s = part.gameObject.AddComponent<Shape>();
+                s.ID = ParseInt(xml.GetAttribute("shapeId"));
+                s.CastShadows = ParseBool(xml.GetAttribute("castsShadows"));
+                s.ReceiveShadows = ParseBool(xml.GetAttribute("receiveShadows"));
+                s.NonRenderable = ParseBool(xml.GetAttribute("nonRenderable"));
+                s.BuildNavMeshMask = ParseInt(xml.GetAttribute("buildNavMeshMask"), 0x0);
+                s._Materials = Shape.ParseMaterialString(ParseString(xml.GetAttribute("materialIds")));
+
+                part.Shape = s;
+
                 //Assign the shape object according to ID
                 foreach (I3DShapeData sh in model.ShapeDatas)
                 {
@@ -462,10 +456,10 @@ namespace Assets.FarmSim.I3D
 
                 for (int i = 0; i < part.Shape._Materials.Length; i++)
                 {
-                    int s = part.Shape._Materials[i];
+                    int shapeMatId = part.Shape._Materials[i];
                     foreach (I3DMaterial mat in model.Materials)
                     {
-                        if (mat.Id != s)
+                        if (mat.Id != shapeMatId)
                             continue;
 
                         part.Shape.Materials[i] = mat;

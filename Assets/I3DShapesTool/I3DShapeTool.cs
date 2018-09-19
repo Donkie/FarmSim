@@ -1,12 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace I3DShapesTool
+namespace Assets.I3DShapesTool
 {
-    class I3DShapeTool
+    public abstract class I3DShapeTool
     {
+        private static readonly Dictionary<string, I3DShape[]> Cache = new Dictionary<string, I3DShape[]>();
+
         private static I3DShapesHeader ParseFileHeader(Stream fs)
         {
             byte b1 = fs.ReadInt8();
@@ -40,9 +42,14 @@ namespace I3DShapesTool
             };
         }
 
-        public static I3DShape[] ParseShapesFile(string path)
+        public static I3DShape[] LoadShapesFile(string path)
         {
-            I3DShape[] shapes;
+            if (Cache.ContainsKey(path))
+            {
+                return Cache[path];
+            }
+
+            List<I3DShape> shapes;
 
             using (FileStream fs = File.OpenRead(path))
             {
@@ -64,34 +71,57 @@ namespace I3DShapesTool
                 using (I3DDecryptorStream dfs = new I3DDecryptorStream(fs, header.Seed))
                 {
                     int itemCount = dfs.ReadInt32L();
-                    shapes = new I3DShape[itemCount];
+                    shapes = new List<I3DShape>();
 
                     Debug.Log("Found " + itemCount + " shapes");
                     Debug.Log("");
                     for (int i = 0; i < itemCount; i++)
                     {
-                        Console.Write("{0}: ", i + 1);
-
                         int type = dfs.ReadInt32L();
                         int size = dfs.ReadInt32L();
-                        Console.Write("(Type {0}) ", type);
-                        Console.Write(size + " bytes");
                         byte[] data = dfs.ReadBytes(size);
+
+                        Debug.Log($"{i+1}: (Type {type}) {size} bytes");
+
+                        string binFileName = $"{i+1}-{type}.bin";
+                        //File.WriteAllBytes(Path.Combine(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\maps\decompile", binFileName), data);
+                        //File.WriteAllBytes(Path.Combine(@"D:\SteamLibrary\steamapps\common\Farming Simulator 2013\data\maps\decompile\chickenmesh", binFileName), data);
                         
                         using (MemoryStream ms = new MemoryStream(data))
                         {
                             using (BigEndianBinaryReader br = new BigEndianBinaryReader(ms))
                             {
-                                shapes[i] = new I3DShape(br);
+                                try
+                                {
+                                    switch (type)
+                                    {
+                                        case 1:
+                                            shapes.Add(new I3DShape(br));
+                                            //Debug.Log($" - {shapes[i].Name}");
+                                            break;
+                                        case 2:
+                                            new I3DSpline(br);
+                                            break;
+                                        case 3:
+                                            new I3DNavMesh(br);
+                                            break;
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.Log(e.Message);
+                                }
                             }
                         }
-                        
-                        Debug.Log($" - {shapes[i].Name}");
                     }
                 }
             }
+
+            I3DShape[] shapesArr = shapes.ToArray();
+
+            Cache[path] = shapesArr;
          
-            return shapes;
+            return shapesArr;
         }
     }
 }

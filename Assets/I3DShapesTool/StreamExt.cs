@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace I3DShapesTool
+namespace Assets.I3DShapesTool
 {
     /// <summary>
     /// Created by "high" https://facepunch.com/member.php?u=60704

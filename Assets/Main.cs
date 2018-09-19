@@ -30,9 +30,17 @@ namespace Assets
             _importer = new I3DImporter();
             I3DImporter.GenericShape = GenericShape;
 
-            SpawnVehicle("F:/SteamLibrary/steamapps/common/Farming Simulator 15/data/vehicles/steerable/cars/piQup.i3d", Vector3.zero);
-            SpawnVehicle(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\vehicles\steerable\grimme\grimmeMaxtron620.i3d", new Vector3(10, 0, 0));
-            
+            //SpawnVehicle("F:/SteamLibrary/steamapps/common/Farming Simulator 15/data/vehicles/steerable/cars/piQup.i3d", Vector3.zero);
+            /*
+            for (int i = 0; i < 100; i++)
+            {
+                SpawnVehicle(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\vehicles\steerable\grimme\grimmeMaxtron620.i3d", new Vector3(10 * i, 0, 0));
+            }
+            */
+            SpawnVehicle(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\maps\map01.i3d", Vector3.zero);
+            //SpawnVehicle(@"D:\SteamLibrary\steamapps\common\Farming Simulator 2013\data\maps\map01.i3d", Vector3.zero);
+            //SpawnVehicle(@"D:\SteamLibrary\steamapps\common\Farming Simulator 2013\data\maps\chickennavmesh.i3d", Vector3.zero);
+
         }
     }
 }

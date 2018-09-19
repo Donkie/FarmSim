@@ -1,4 +1,4 @@
-﻿namespace I3DShapesTool
+﻿namespace Assets.I3DShapesTool
 {
     class I3DUV
     {
