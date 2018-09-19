@@ -43,11 +43,11 @@ namespace Assets.FarmSim
         }
 
         /// <summary>
-        /// Parses a DXT1/3/5 texture from raw bytes including header. If DXT3 is detected, Pfim is used instead since Unity doesn't natively support DXT3.
+        /// Parses a DDS texture from raw bytes including header. If DXT3 is detected, Pfim is used instead since Unity doesn't natively support DXT3.
         /// </summary>
         /// <param name="ddsBytes"></param>
         /// <returns></returns>
-        private static Texture2D LoadTextureDxt(byte[] ddsBytes)
+        private static Texture2D LoadTextureDDS(byte[] ddsBytes)
         {
             byte ddsSizeCheck = ddsBytes[0x4];
             if (ddsSizeCheck != 124)
@@ -77,13 +77,20 @@ namespace Assets.FarmSim
             const int ddsHeaderSize = 128;
             byte[] dxtBytes = new byte[ddsBytes.Length - ddsHeaderSize];
             Buffer.BlockCopy(ddsBytes, ddsHeaderSize, dxtBytes, 0, ddsBytes.Length - ddsHeaderSize);
-
+            
             Texture2D texture = new Texture2D(width, height, textureFormat, false, false);
 
             texture.LoadRawTextureData(dxtBytes);
             texture.Apply();
             
             return texture;
+        }
+
+        private static Texture2D LoadTexturePNGOrJPG(byte[] bytes)
+        {
+            Texture2D ret = new Texture2D(1, 1);
+            ret.LoadImage(bytes);
+            return ret;
         }
 
         public static Texture2D GetTexture(string url)
@@ -95,7 +102,17 @@ namespace Assets.FarmSim
 
             byte[] bytes = System.IO.File.ReadAllBytes(url);
 
-            Texture2D ret = LoadTextureDxt(bytes);
+            Texture2D ret;
+
+            if (bytes[0] == 'D' && bytes[1] == 'D' && bytes[2] == 'S') // DDS
+                ret = LoadTextureDDS(bytes);
+            else if(bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G') // PNG
+                ret = LoadTexturePNGOrJPG(bytes);
+            else if (bytes[0] == 0xFF && bytes[1] == 0xD8) // JPG
+                ret = LoadTexturePNGOrJPG(bytes);
+            else
+                throw new Exception($"Unknown image format for {url}");
+
             Cache[url] = ret;
             return ret;
         }

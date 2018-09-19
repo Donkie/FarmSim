@@ -50,7 +50,7 @@ namespace Assets.I3DShapesTool
             }
 
             List<I3DShape> shapes;
-
+            
             using (FileStream fs = File.OpenRead(path))
             {
                 string fileName = Path.GetFileName(fs.Name) ?? "N/A";
@@ -81,7 +81,7 @@ namespace Assets.I3DShapesTool
                         int size = dfs.ReadInt32L();
                         byte[] data = dfs.ReadBytes(size);
 
-                        Debug.Log($"{i+1}: (Type {type}) {size} bytes");
+                        //Debug.Log($"{i+1}: (Type {type}) {size} bytes");
 
                         string binFileName = $"{i+1}-{type}.bin";
                         //File.WriteAllBytes(Path.Combine(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\maps\decompile", binFileName), data);
@@ -97,7 +97,6 @@ namespace Assets.I3DShapesTool
                                     {
                                         case 1:
                                             shapes.Add(new I3DShape(br));
-                                            //Debug.Log($" - {shapes[i].Name}");
                                             break;
                                         case 2:
                                             new I3DSpline(br);
@@ -114,6 +113,7 @@ namespace Assets.I3DShapesTool
                             }
                         }
                     }
+                    Debug.Log($"Loaded {shapes.Count} shapes");
                 }
             }
 

@@ -453,6 +453,40 @@ namespace Assets.FarmSim.I3D
                     }
                 }
             }
+            else if (xml.LocalName == "TerrainTransformGroup")
+            {
+                // TODO: Parse terrain data into some object
+
+                int heightMapId = ParseInt(xml.GetAttribute("heightMapId"));
+                int patchSize = ParseInt(xml.GetAttribute("patchSize"));
+                float heightScale = ParseFloat(xml.GetAttribute("heightScale"));
+                float unitsPerPixel = ParseFloat(xml.GetAttribute("unitsPerPixel"));
+
+                I3DFile heightMapFile = model.Files.FirstOrDefault(f => f.Id == heightMapId);
+                if (heightMapFile != null)
+                {
+                    Terrain terrain = part.gameObject.AddComponent<Terrain>();
+                    TerrainCollider terrainCollider = part.gameObject.AddComponent<TerrainCollider>();
+
+                    TerrainData td = new TerrainData();
+
+                    Texture2D heightmapTexture = TextureLoader.GetTexture(heightMapFile.AbsolutePath);
+
+                    if (heightmapTexture.width != heightmapTexture.height)
+                        throw new Exception("Couldn't parse heightmap, width != height");
+
+                    int mapRes = heightmapTexture.width;
+
+                    td.heightmapResolution = mapRes;
+                    td.SetHeights(0, 0, I3DTerrain.ParseHeightMapFromDEM(heightmapTexture));
+                    td.size = new Vector3(unitsPerPixel * (mapRes - 1), heightScale, unitsPerPixel * (mapRes - 1));
+
+                    terrain.terrainData = td;
+                    terrainCollider.terrainData = td;
+
+                    part.gameObject.transform.localPosition += new Vector3(-td.size.x / 2, 0, -td.size.z / 2);
+                }
+            }
         }
 
         private static void SetParent(Transform parent, Transform child)
