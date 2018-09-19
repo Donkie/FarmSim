@@ -2,9 +2,9 @@ using System.Xml;
 
 namespace Assets.FarmSim
 {
-    public class XmlReaderExt
+    public static class XmlReaderExt
     {
-        public static bool ReadToNextElement(XmlReader xml)
+        public static bool ReadToNextElement(this XmlReader xml)
         {
             while (xml.Read())
             {
@@ -15,18 +15,13 @@ namespace Assets.FarmSim
             return false;
         }
 
-        public static bool SafeCheckEndElement(XmlReader xml)
+        public static bool NotAtEnd(this XmlReader xml)
         {
             return xml.NodeType != XmlNodeType.EndElement && !xml.EOF;
         }
 
-        public static void Read(XmlReader xml)
+        public static void ReadAndMove(this XmlReader xml)
         {
-            /*while (xml.Read())
-            {
-                if (xml.NodeType != XmlNodeType.Whitespace)
-                    break;
-            }*/
             xml.Read();
             xml.MoveToContent();
         }
