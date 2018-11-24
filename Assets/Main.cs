@@ -1,6 +1,4 @@
-﻿using System;
-using UnityEditor;
-using UnityEngine;
+﻿using UnityEngine;
 using Assets.FarmSim.I3D;
 
 namespace Assets
@@ -37,10 +35,9 @@ namespace Assets
                 SpawnVehicle(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\vehicles\steerable\grimme\grimmeMaxtron620.i3d", new Vector3(10 * i, 0, 0));
             }
             */
-            SpawnEntity(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\maps\map01.i3d", Vector3.zero);
+            Entity world = SpawnEntity(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\maps\map01.i3d", Vector3.zero);
             //SpawnVehicle(@"D:\SteamLibrary\steamapps\common\Farming Simulator 2013\data\maps\map01.i3d", Vector3.zero);
             //SpawnVehicle(@"D:\SteamLibrary\steamapps\common\Farming Simulator 2013\data\maps\chickennavmesh.i3d", Vector3.zero);
-
         }
     }
 }

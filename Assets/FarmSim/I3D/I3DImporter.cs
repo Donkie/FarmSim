@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Assets.Components;
@@ -65,6 +64,25 @@ namespace Assets.FarmSim.I3D
 
             int i = 0;
             foreach (Match match in colorRegex.Matches(vec3))
+            {
+                if (match.Success)
+                    output[i] = ParseFloat(match.Value);
+
+                i++;
+            }
+
+            return output;
+        }
+
+        private static Vector4 ParseVector4(string vec4)
+        {
+            if (vec4 == null)
+                return new Vector4();
+
+            Vector4 output = new Vector4();
+
+            int i = 0;
+            foreach (Match match in colorRegex.Matches(vec4))
             {
                 if (match.Success)
                     output[i] = ParseFloat(match.Value);
@@ -181,7 +199,7 @@ namespace Assets.FarmSim.I3D
                     {
                         int fileId = ParseInt(xml.GetAttribute("fileId"));
 
-                        I3DFile file = model.Files.FirstOrDefault(f => f.Id == fileId);
+                        I3DFile file = model.GetFile(fileId);
 
                         switch (xml.LocalName)
                         {
@@ -368,6 +386,13 @@ namespace Assets.FarmSim.I3D
 
         private static void ParseFile_SceneShapesAttributes(XmlReader xml, ref I3DModel model, Entity part)
         {
+            Entity.ShapeType type;
+            if (!Enum.TryParse(xml.LocalName, out type))
+            {
+                throw new Exception($"Unrecognized shape type {xml.LocalName}");
+            }
+            part.Type = type;
+
             //I3DTransform
             I3DTransform t = part.gameObject.AddComponent<I3DTransform>();
             t.Name = ParseString(xml.GetAttribute("name"));
@@ -419,7 +444,7 @@ namespace Assets.FarmSim.I3D
             }
 
             //Shape
-            if (xml.LocalName == "Shape")
+            if (part.Type == Entity.ShapeType.Shape)
             {
                 Shape s = part.gameObject.AddComponent<Shape>();
                 s.ID = ParseInt(xml.GetAttribute("shapeId"));
@@ -460,39 +485,55 @@ namespace Assets.FarmSim.I3D
                     }
                 }
             }
-            else if (xml.LocalName == "TerrainTransformGroup")
+            else if (part.Type == Entity.ShapeType.TerrainTransformGroup)
             {
-                // TODO: Parse terrain data into some object
-
                 int heightMapId = ParseInt(xml.GetAttribute("heightMapId"));
-                int patchSize = ParseInt(xml.GetAttribute("patchSize"));
+                //int patchSize = ParseInt(xml.GetAttribute("patchSize"));
                 float heightScale = ParseFloat(xml.GetAttribute("heightScale"));
                 float unitsPerPixel = ParseFloat(xml.GetAttribute("unitsPerPixel"));
 
-                I3DFile heightMapFile = model.Files.FirstOrDefault(f => f.Id == heightMapId);
+                I3DFile heightMapFile = model.GetFile(heightMapId);
                 if (heightMapFile != null)
                 {
-                    Terrain terrain = part.gameObject.AddComponent<Terrain>();
-                    TerrainCollider terrainCollider = part.gameObject.AddComponent<TerrainCollider>();
+                    I3DTerrain i3DTerrain = part.gameObject.AddComponent<I3DTerrain>();
+                    i3DTerrain.AlphaWidth = ParseInt(xml.GetAttribute("lodTextureSize"));
+                    i3DTerrain.AlphaHeight = ParseInt(xml.GetAttribute("lodTextureSize"));
+                    i3DTerrain.Terrain = part.gameObject.AddComponent<Terrain>();
+                    i3DTerrain.TerrainData = new TerrainData();
+                    i3DTerrain.TerrainCollider = part.gameObject.AddComponent<TerrainCollider>();
+                    i3DTerrain.HeightMapScale = heightScale;
+                    i3DTerrain.HeightMapUnitsPerPixel = unitsPerPixel;
+                    i3DTerrain.HeightMap = TextureLoader.GetTexture(heightMapFile.AbsolutePath);
 
-                    TerrainData td = new TerrainData();
-
-                    Texture2D heightmapTexture = TextureLoader.GetTexture(heightMapFile.AbsolutePath);
-
-                    if (heightmapTexture.width != heightmapTexture.height)
-                        throw new Exception("Couldn't parse heightmap, width != height");
-
-                    int mapRes = heightmapTexture.width;
-
-                    td.heightmapResolution = mapRes;
-                    td.SetHeights(0, 0, I3DTerrain.Parse16BitMap(heightmapTexture));
-                    td.size = new Vector3(unitsPerPixel * (mapRes - 1), heightScale, unitsPerPixel * (mapRes - 1));
-
-                    terrain.terrainData = td;
-                    terrainCollider.terrainData = td;
-                    
-                    part.gameObject.transform.localPosition += new Vector3(-td.size.x / 2, 0, -td.size.z / 2);
+                    i3DTerrain.BuildHeightmap();
                 }
+            }
+            else if (part.Type == Entity.ShapeType.Layer)
+            {
+                I3DFile detailMapFile = model.GetFile(ParseInt(xml.GetAttribute("detailMapId"))); // Detail map = diffuse texture
+                I3DFile normalMapFile = model.GetFile(ParseInt(xml.GetAttribute("normalMapId"))); // Normal map = normal texture
+                I3DFile weightMapFile = model.GetFile(ParseInt(xml.GetAttribute("weightMapId"))); // Weight map = splat map?
+                //I3DFile distanceMapFile = model.GetFile(ParseInt(xml.GetAttribute("distanceMapId"))); // Distance map = low-res diffuse texture
+
+                int unitSize = ParseInt(xml.GetAttribute("unitSize"));
+                //int distanceMapUnitSize = ParseInt(xml.GetAttribute("distanceMapUnitSize")); // Unknown
+
+                SplatPrototype splat = new SplatPrototype
+                {
+                    texture = TextureLoader.GetTexture(detailMapFile.AbsolutePath),
+                    normalMap = TextureLoader.GetTexture(normalMapFile.AbsolutePath),
+                    tileSize = new Vector2(unitSize, unitSize),
+                    tileOffset = Vector2.zero
+                };
+                
+                I3DTerrain i3Dterrain = part.GetComponentInParent<I3DTerrain>();
+                i3Dterrain.Layers.Add(new I3DTerrainLayer
+                {
+                    Priority = ParseInt(xml.GetAttribute("priority")),
+                    Attributes = ParseVector4(xml.GetAttribute("attributes")),
+                    SplatMap = splat,
+                    Weights = I3DTerrainUtil.Parse8BitMap(TextureLoader.GetTexture(weightMapFile.AbsolutePath))
+                });
             }
         }
 
@@ -510,11 +551,13 @@ namespace Assets.FarmSim.I3D
         }
 
         public static Entity GenericShape;
-        private static Entity ParseFile_SceneShapesRecurse(ref I3DModel model, XmlReader xml)
+        private static Entity ParseFile_SceneShapesRecurse(ref I3DModel model, XmlReader xml, Entity parent)
         {
             Entity part = UnityEngine.Object.Instantiate(GenericShape, Vector3.zero, Quaternion.identity);
             if (part == null)
                 return null;
+
+            SetParent(parent.transform, part.transform);
 
             ParseFile_SceneShapesAttributes(xml, ref model, part);
 
@@ -527,9 +570,7 @@ namespace Assets.FarmSim.I3D
                 xml.ReadAndMove();
                 while (xml.NotAtEnd())
                 {
-                    Entity child = ParseFile_SceneShapesRecurse(ref model, xml);
-                    if(child != null)
-                        SetParent(part.transform, child.transform);
+                    ParseFile_SceneShapesRecurse(ref model, xml, part);
 
                     xml.ReadAndMove();
                 }
@@ -544,9 +585,7 @@ namespace Assets.FarmSim.I3D
 
             while (xml.NotAtEnd())
             {
-                Entity child = ParseFile_SceneShapesRecurse(ref model, xml);
-                if (child != null)
-                    SetParent(root.transform, child.transform);
+                ParseFile_SceneShapesRecurse(ref model, xml, root);
 
                 xml.ReadAndMove();
             }
@@ -578,6 +617,7 @@ namespace Assets.FarmSim.I3D
 
                 output.Name = xml.GetAttribute("name");
                 root.name = xml.GetAttribute("name");
+                root.Type = Entity.ShapeType.i3D;
 
                 while (xml.ReadToNextElement())
                 {

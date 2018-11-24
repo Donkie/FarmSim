@@ -1,6 +1,4 @@
-using System;
 using System.Linq;
-using Assets.Components;
 
 namespace Assets.FarmSim.I3D
 {
@@ -11,6 +9,11 @@ namespace Assets.FarmSim.I3D
         public I3DFile[] Files { get; set; }
         public I3DMaterial[] Materials { get; set; }
         public I3DShapeData[] ShapeDatas { get; set; }
+
+        public I3DFile GetFile(int fileId)
+        {
+            return Files.FirstOrDefault(f => f.Id == fileId);
+        }
 
         /*
         public I3DSceneShape GetSceneById(string id)

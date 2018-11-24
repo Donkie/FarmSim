@@ -1,5 +1,3 @@
-using System;
-
 namespace Assets.FarmSim.I3D
 {
     public class I3DMap

@@ -1,16 +1,26 @@
 ﻿using System;
-using System.Collections;
 using Assets.Components;
 using Assets.FarmSim;
 using Assets.FarmSim.I3D;
-using Pfim;
 using UnityEngine;
+using UnityEngine.Collections;
 
 namespace Assets
 {
     public class Entity : MonoBehaviour
     {
         public Shape Shape;
+
+        public enum ShapeType
+        {
+            Camera, Light, TerrainTransformGroup, Layers,
+            Layer, LayerCombiner, LayerPair, InfoLayer,
+            FoliageMultiLayer, FoliageSubLayer, DetailLayer, TransformGroup,
+            Shape, i3D, NavigationMesh, AudioSource
+        }
+
+        [ReadOnly]
+        public ShapeType Type;
         [HideInInspector]
         public Texture2D Tex;
         
@@ -29,7 +39,11 @@ namespace Assets
         {
             while (true)
             {
-                if (part.GetComponent<I3DTransform>().Visibility == false)
+                I3DTransform i3Dtransform = part.GetComponent<I3DTransform>();
+                if (!i3Dtransform)
+                    return true;
+
+                if (i3Dtransform.Visibility == false)
                     return false;
 
                 if (part.transform.parent == null)

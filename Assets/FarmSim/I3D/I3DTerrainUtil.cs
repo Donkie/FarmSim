@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Assets.FarmSim.I3D
 {
-    public class I3DTerrain
+    public class I3DTerrainUtil
     {
         public static float[,] Parse16BitMap(Texture2D dem)
         {

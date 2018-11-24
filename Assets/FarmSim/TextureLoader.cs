@@ -9,12 +9,35 @@ namespace Assets.FarmSim
     {
         private static readonly Dictionary<string, Texture2D> Cache = new Dictionary<string, Texture2D>();
 
+        private static Texture2D LoadTextureFromBytes(byte[] bytes, int width, int height, TextureFormat format, bool mipmap)
+        {
+            Texture2D texture;
+            try
+            {
+                texture = new Texture2D(width, height, format, mipmap, false);
+                texture.LoadRawTextureData(bytes);
+                texture.Apply();
+            }
+            catch (UnityException)
+            {
+                // Failed to load, usually is due to the texture data specifying that it has mipmaps but then doesn't contain enough data for all mipmaps??
+                // Load the texture without mipmap support
+                // In future: add some method for unity to compute mipmaps here instead
+                texture = new Texture2D(width, height, format, false, false);
+                texture.LoadRawTextureData(bytes);
+                texture.Apply();
+            }
+
+            return texture;
+        }
+
         /// <summary>
         /// Parses any DXT texture from raw bytes including header using Pfim.
         /// </summary>
         /// <param name="bytes"></param>
+        /// <param name="mipmap">Does the texture contain mipmap data</param>
         /// <returns></returns>
-        private static Texture2D LoadTexturePfim(byte[] bytes)
+        private static Texture2D LoadTexturePfim(byte[] bytes, bool mipmap)
         {
             IImage imageData = Dds.Create(bytes, new PfimConfig());
             imageData.Decompress();
@@ -34,12 +57,7 @@ namespace Assets.FarmSim
                     throw new Exception($"Unknown raw image format {frmt}");
             }
 
-            Texture2D texture = new Texture2D(imageData.Width, imageData.Height, texFrmt, false, false);
-
-            texture.LoadRawTextureData(imageData.Data);
-            texture.Apply();
-
-            return texture;
+            return LoadTextureFromBytes(imageData.Data, imageData.Width, imageData.Height, texFrmt, mipmap);
         }
 
         /// <summary>
@@ -56,7 +74,8 @@ namespace Assets.FarmSim
             int height = ddsBytes[0xF] << 24 | ddsBytes[0xE] << 16 | ddsBytes[0xD] << 8 | ddsBytes[0xC];
             int width = ddsBytes[0x13] << 24 | ddsBytes[0x12] << 16 | ddsBytes[0x11] << 8 | ddsBytes[0x10];
 
-            //int mipmapCount = ddsBytes[0x1F] << 24 | ddsBytes[0x1E] << 16 | ddsBytes[0x1D] << 8 | ddsBytes[0x1C];
+            int mipmapCount = ddsBytes[0x1F] << 24 | ddsBytes[0x1E] << 16 | ddsBytes[0x1D] << 8 | ddsBytes[0x1C];
+            bool hasMipMaps = mipmapCount > 0;
 
             TextureFormat textureFormat;
             string texFormatStr = System.Text.Encoding.ASCII.GetString(ddsBytes, 0x54, 4);
@@ -66,7 +85,7 @@ namespace Assets.FarmSim
                     textureFormat = TextureFormat.DXT1;
                     break;
                 case "DXT3":
-                    return LoadTexturePfim(ddsBytes);
+                    return LoadTexturePfim(ddsBytes, hasMipMaps);
                 case "DXT5":
                     textureFormat = TextureFormat.DXT5;
                     break;
@@ -78,12 +97,7 @@ namespace Assets.FarmSim
             byte[] dxtBytes = new byte[ddsBytes.Length - ddsHeaderSize];
             Buffer.BlockCopy(ddsBytes, ddsHeaderSize, dxtBytes, 0, ddsBytes.Length - ddsHeaderSize);
             
-            Texture2D texture = new Texture2D(width, height, textureFormat, false, false);
-
-            texture.LoadRawTextureData(dxtBytes);
-            texture.Apply();
-            
-            return texture;
+            return LoadTextureFromBytes(dxtBytes, width, height, textureFormat, hasMipMaps);
         }
 
         private static Texture2D LoadTexturePNGOrJPG(byte[] bytes)
