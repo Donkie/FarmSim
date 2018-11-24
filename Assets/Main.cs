@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Assets.Components;
+using UnityEngine;
 using Assets.FarmSim.I3D;
 
 namespace Assets
@@ -38,6 +39,10 @@ namespace Assets
             Entity world = SpawnEntity(@"F:\SteamLibrary\steamapps\common\Farming Simulator 15\data\maps\map01.i3d", Vector3.zero);
             //SpawnVehicle(@"D:\SteamLibrary\steamapps\common\Farming Simulator 2013\data\maps\map01.i3d", Vector3.zero);
             //SpawnVehicle(@"D:\SteamLibrary\steamapps\common\Farming Simulator 2013\data\maps\chickennavmesh.i3d", Vector3.zero);
+
+            I3DTerrain i3Dterrain = world.gameObject.GetComponentInChildren<I3DTerrain>();
+            i3Dterrain.BuildTerrainLayers();
+
         }
     }
 }

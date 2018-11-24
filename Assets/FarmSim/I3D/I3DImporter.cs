@@ -393,9 +393,11 @@ namespace Assets.FarmSim.I3D
             }
             part.Type = type;
 
+            string name = ParseString(xml.GetAttribute("name"));
+
             //I3DTransform
             I3DTransform t = part.gameObject.AddComponent<I3DTransform>();
-            t.Name = ParseString(xml.GetAttribute("name"));
+            t.Name = name;
             t.Id = ParseInt(xml.GetAttribute("nodeId"));
             t.IndexPath = ""; //TODO: Make this
             t.Visibility = ParseBool(xml.GetAttribute("visibility"), true);
@@ -553,6 +555,13 @@ namespace Assets.FarmSim.I3D
         public static Entity GenericShape;
         private static Entity ParseFile_SceneShapesRecurse(ref I3DModel model, XmlReader xml, Entity parent)
         {
+            string name = ParseString(xml.GetAttribute("name"));
+            if (xml.Name == "TransformGroup" && (name.StartsWith("pine") || name.StartsWith("poplar") || name.StartsWith("oak") || name.StartsWith("ash") || name.StartsWith("birch") || name.StartsWith("spruce") || name.StartsWith("maple")))
+            {
+                xml.ReadToNextSibling();
+                return null;
+            }
+
             Entity part = UnityEngine.Object.Instantiate(GenericShape, Vector3.zero, Quaternion.identity);
             if (part == null)
                 return null;

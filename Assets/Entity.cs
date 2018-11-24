@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Assets.Components;
 using Assets.FarmSim;
 using Assets.FarmSim.I3D;
@@ -16,7 +17,8 @@ namespace Assets
             Camera, Light, TerrainTransformGroup, Layers,
             Layer, LayerCombiner, LayerPair, InfoLayer,
             FoliageMultiLayer, FoliageSubLayer, DetailLayer, TransformGroup,
-            Shape, i3D, NavigationMesh, AudioSource
+            Shape, i3D, NavigationMesh, AudioSource,
+            Dynamic
         }
 
         [ReadOnly]
@@ -63,7 +65,63 @@ namespace Assets
 
             return VisibleInnerCheck(gameObject.transform.parent.gameObject);
         }
-        
+
+        public enum BlendMode
+        {
+            Opaque,
+            Cutout,
+            Fade,
+            Transparent
+        }
+
+        public static void ChangeRenderMode(Material mat, BlendMode blendMode)
+        {
+            switch (blendMode)
+            {
+                case BlendMode.Opaque:
+                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+                    mat.SetInt("_ZWrite", 1);
+                    mat.DisableKeyword("_ALPHATEST_ON");
+                    mat.DisableKeyword("_ALPHABLEND_ON");
+                    mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    mat.renderQueue = -1;
+                    break;
+                case BlendMode.Cutout:
+                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
+                    mat.SetInt("_ZWrite", 1);
+                    mat.EnableKeyword("_ALPHATEST_ON");
+                    mat.DisableKeyword("_ALPHABLEND_ON");
+                    mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    mat.renderQueue = 2450;
+                    break;
+                case BlendMode.Fade:
+                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    mat.SetInt("_ZWrite", 0);
+                    mat.DisableKeyword("_ALPHATEST_ON");
+                    mat.EnableKeyword("_ALPHABLEND_ON");
+                    mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    mat.renderQueue = 3000;
+                    break;
+                case BlendMode.Transparent:
+                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    mat.SetInt("_ZWrite", 0);
+                    mat.DisableKeyword("_ALPHATEST_ON");
+                    mat.DisableKeyword("_ALPHABLEND_ON");
+                    mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    mat.renderQueue = 3000;
+                    break;
+            }
+        }
+
+        public readonly HashSet<int> CutoutShaders = new HashSet<int>
+        {
+            136, 164, 176
+        };
+
         public void Setup()
         {
             //Assign material
@@ -94,17 +152,13 @@ namespace Assets
 
                     if (shapeMaterial.AlphaBlending)
                     {
-                        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
-                        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                        mat.SetInt("_ZWrite", 0);
-                        mat.DisableKeyword("_ALPHATEST_ON");
-                        mat.DisableKeyword("_ALPHABLEND_ON");
-                        mat.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                        mat.renderQueue = 3000;
+                        ChangeRenderMode(mat, BlendMode.Transparent);
                     }
 
-                    //if (shapeMaterial.ReflectionMap != null)
-                    //    mat.SetTexture("_Cube", LoadTexture(shapeMaterial.ReflectionMap.AbsolutePath));
+                    if (CutoutShaders.Contains(shapeMaterial.CustomShaderId))
+                    {
+                        ChangeRenderMode(mat, BlendMode.Cutout);
+                    }
                 }
             }
 

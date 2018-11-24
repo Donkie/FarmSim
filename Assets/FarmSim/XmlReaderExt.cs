@@ -25,5 +25,14 @@ namespace Assets.FarmSim
             xml.Read();
             xml.MoveToContent();
         }
+
+        public static void ReadToNextSibling(this XmlReader xml)
+        {
+            int startDepth = xml.Depth;
+            if (xml.IsEmptyElement)
+                return;
+            xml.Read();
+            while (xml.Depth > startDepth) xml.Read();
+        }
     }
 }
