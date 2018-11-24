@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Assets.Components;
@@ -448,6 +449,38 @@ namespace Assets.FarmSim.I3D
             //Shape
             if (part.Type == Entity.ShapeType.Shape)
             {
+                if (name.EndsWith("_lod0") || name.EndsWith("_lod1") || name.EndsWith("_lod2"))
+                {
+                    Transform parent = part.transform.parent;
+                    LODGroup lodGroup = parent.GetComponent<LODGroup>();
+                    if (lodGroup == null)
+                    {
+                        lodGroup = parent.gameObject.AddComponent<LODGroup>();
+                        lodGroup.SetLODs(new LOD[]{});
+                    }
+
+                    int lodIndex = ParseInt(name.Substring(name.Length - 1));
+
+                    LOD lod = new LOD{renderers = new Renderer[] {part.GetComponent<MeshRenderer>()}};
+
+                    List<LOD> lods = lodGroup.GetLODs().ToList();
+
+                    if (lodIndex > lods.Count)
+                        lods.Add(lod);
+                    else
+                        lods.Insert(lodIndex, lod);
+
+                    // Update the transition point for all LODs
+                    float lodGap = 1f / lods.Count;
+                    for(int i = 0; i < lods.Count; i++)
+                    {
+                        lods[i] = new LOD((lods.Count - i - 1) * lodGap, lods[i].renderers);
+                    }
+                    
+                    lodGroup.SetLODs(lods.ToArray());
+                    lodGroup.RecalculateBounds();
+                }
+
                 Shape s = part.gameObject.AddComponent<Shape>();
                 s.ID = ParseInt(xml.GetAttribute("shapeId"));
                 s.CastShadows = ParseBool(xml.GetAttribute("castsShadows"));
