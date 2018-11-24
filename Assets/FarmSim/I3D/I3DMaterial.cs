@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Assets.FarmSim.I3D
@@ -13,15 +14,14 @@ namespace Assets.FarmSim.I3D
         public Color AmbientColor;
         public bool AlphaBlending;
 
-        public int TextureFileId;
         public I3DFile TextureFile;
-        public int NormalMapFileId;
         public I3DFile NormalMapFile;
-        public int GlossMapFileId;
         public I3DFile GlossMapFile;
-        public int EmissiveMapFileId;
         public I3DFile EmissiveMapFile;
-        public int ReflectionMapId;
         public I3DFile ReflectionMap;
+        
+        public Dictionary<string, I3DFile> CustomMaps;
+
+        public Dictionary<string, string> CustomParameters;
     }
 }

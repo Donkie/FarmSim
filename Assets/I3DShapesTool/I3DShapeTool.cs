@@ -35,6 +35,15 @@ namespace Assets.I3DShapesTool
                 throw new NotSupportedException("Unknown version");
             }
 
+            /*
+            byte[] header = fs.ReadBytes(4);
+            byte v87 = header[3];
+            if (((v87 - 2) & 0xEF) != 0)
+            {
+
+            }
+            */
+            
             return new I3DShapesHeader
             {
                 Seed = seed,

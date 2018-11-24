@@ -174,6 +174,9 @@ namespace Assets.FarmSim.I3D
 
                     xml.ReadAndMove();
 
+                    Dictionary<string, I3DFile> customMaps = new Dictionary<string, I3DFile>();
+                    Dictionary<string, string> customParameters = new Dictionary<string, string>();
+
                     while (xml.NodeType != XmlNodeType.EndElement)
                     {
                         int fileId = ParseInt(xml.GetAttribute("fileId"));
@@ -184,28 +187,32 @@ namespace Assets.FarmSim.I3D
                         {
                             case "Emissivemap":
                                 mat.EmissiveMapFile = file;
-                                mat.EmissiveMapFileId = fileId;
                                 break;
                             case "Texture":
                                 mat.TextureFile = file;
-                                mat.TextureFileId = fileId;
                                 break;
                             case "Normalmap":
                                 mat.NormalMapFile = file;
-                                mat.NormalMapFileId = fileId;
                                 break;
                             case "Glossmap":
                                 mat.GlossMapFile = file;
-                                mat.GlossMapFileId = fileId;
                                 break;
                             case "Reflectionmap":
                                 mat.ReflectionMap = file;
-                                mat.ReflectionMapId = fileId;
+                                break;
+                            case "Custommap":
+                                customMaps[ParseString(xml.GetAttribute("name"))] = file;
+                                break;
+                            case "CustomParameter":
+                                customParameters[ParseString(xml.GetAttribute("name"))] = ParseString(xml.GetAttribute("value"));
                                 break;
                         }
 
                         xml.ReadAndMove();
                     }
+
+                    mat.CustomMaps = customMaps;
+                    mat.CustomParameters = customParameters;
 
                     mats.Push(mat);
                 }
@@ -478,12 +485,12 @@ namespace Assets.FarmSim.I3D
                     int mapRes = heightmapTexture.width;
 
                     td.heightmapResolution = mapRes;
-                    td.SetHeights(0, 0, I3DTerrain.ParseHeightMapFromDEM(heightmapTexture));
+                    td.SetHeights(0, 0, I3DTerrain.Parse16BitMap(heightmapTexture));
                     td.size = new Vector3(unitsPerPixel * (mapRes - 1), heightScale, unitsPerPixel * (mapRes - 1));
 
                     terrain.terrainData = td;
                     terrainCollider.terrainData = td;
-
+                    
                     part.gameObject.transform.localPosition += new Vector3(-td.size.x / 2, 0, -td.size.z / 2);
                 }
             }
